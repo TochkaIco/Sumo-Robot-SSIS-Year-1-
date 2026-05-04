@@ -175,6 +175,26 @@ function bindBtn(el, cmd) {
   });
 }
 
+document.addEventListener('keydown', function(e) {
+  switch(e.key.toLowerCase()) {
+    case 'w': send_command(CMD_FORWARD);  document.getElementById('btn-fwd').classList.add('active');  break;
+    case 's': send_command(CMD_BACKWARD); document.getElementById('btn-bwd').classList.add('active');  break;
+    case 'a': send_command(CMD_LEFT);     document.getElementById('btn-left').classList.add('active'); break;
+    case 'd': send_command(CMD_RIGHT);    document.getElementById('btn-right').classList.add('active');break;
+    case ' ': send_command(CMD_STOP);     document.getElementById('btn-stop').classList.add('active'); break;
+  }
+});
+
+document.addEventListener('keyup', function(e) {
+  switch(e.key.toLowerCase()) {
+    case 'w': send_command(CMD_STOP); document.getElementById('btn-fwd').classList.remove('active');  break;
+    case 's': send_command(CMD_STOP); document.getElementById('btn-bwd').classList.remove('active');  break;
+    case 'a': send_command(CMD_STOP); document.getElementById('btn-left').classList.remove('active'); break;
+    case 'd': send_command(CMD_STOP); document.getElementById('btn-right').classList.remove('active');break;
+    case ' ': send_command(CMD_STOP); document.getElementById('btn-stop').classList.remove('active'); break;
+  }
+});
+
 bindBtn(document.getElementById('btn-fwd'),  CMD_FORWARD);
 bindBtn(document.getElementById('btn-bwd'),  CMD_BACKWARD);
 bindBtn(document.getElementById('btn-left'), CMD_LEFT);
