@@ -130,13 +130,13 @@ void CAR_turnLeft() {
   digitalWrite(IN1_PIN, HIGH);
   digitalWrite(IN2_PIN, LOW);
   digitalWrite(IN3_PIN, LOW);
-  digitalWrite(IN4_PIN, LOW);
+  digitalWrite(IN4_PIN, HIGH);
 }
 
 void CAR_turnRight() {
 
   digitalWrite(IN1_PIN, LOW);
-  digitalWrite(IN2_PIN, LOW);
+  digitalWrite(IN2_PIN, HIGH);
   digitalWrite(IN3_PIN, HIGH);
   digitalWrite(IN4_PIN, LOW);
 }
