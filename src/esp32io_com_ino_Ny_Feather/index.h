@@ -151,50 +151,143 @@ const char *HTML_CONTENT = R"=====(
 <button class="connect-btn" id="wc_conn" onclick="wc_onclick()">Connect</button>
 
 <script>
-var CMD_STOP=0, CMD_FORWARD=1, CMD_BACKWARD=2, CMD_LEFT=4, CMD_RIGHT=8;
+var CMD_STOP=0, CMD_FORWARD=1, CMD_BACKWARD=6, CMD_LEFT=4, CMD_RIGHT=5, CMD_FORWARD_RIGHT=2, CMD_FORWARD_LEFT=3, CMD_BACKWARD_RIGHT=6, CMD_BACKWARD_LEFT=7;
 var ws = null;
 
 function send_command(cmd) {
   if (ws && ws.readyState === 1) ws.send(cmd + "\r\n");
 }
 
+// 1. Create an object to track which keys are active
+const keysPressed = {
+  w: false,
+  a: false,
+  s: false,
+  d: false,
+  ' ': false
+};
+
+// Map your button IDs to their corresponding keyboard state keys
+const btnIdToKey = {
+  'btn-fwd': 'w',
+  'btn-bwd': 's',
+  'btn-left': 'a',
+  'btn-right': 'd',
+  'btn-stop': ' '
+};
+
+// 2. Updated bindBtn to talk directly to our central state machine
 function bindBtn(el, cmd) {
-  ['mousedown','touchstart'].forEach(function(e) {
+  if (!el) return;
+  const key = btnIdToKey[el.id];
+
+  ['mousedown', 'touchstart'].forEach(function(e) {
     el.addEventListener(e, function(ev) {
       ev.preventDefault();
-      el.classList.add('active');
-      send_command(cmd);
+      if (key) {
+        keysPressed[key] = true;
+        updateMovement();
+      } else {
+        // Fallback fallback if an unmapped button uses this function
+        el.classList.add('active');
+        send_command(cmd);
+      }
     });
   });
-  ['mouseup','mouseleave','touchend','touchcancel'].forEach(function(e) {
+
+  ['mouseup', 'mouseleave', 'touchend', 'touchcancel'].forEach(function(e) {
     el.addEventListener(e, function(ev) {
       ev.preventDefault();
-      el.classList.remove('active');
-      send_command(CMD_STOP);
+      if (key) {
+        keysPressed[key] = false;
+        updateMovement();
+      } else {
+        // Fallback fallback
+        el.classList.remove('active');
+        send_command(CMD_STOP);
+      }
     });
   });
 }
 
+// 3. Update the state object on keydown/keyup
 document.addEventListener('keydown', function(e) {
-  switch(e.key.toLowerCase()) {
-    case 'w': send_command(CMD_FORWARD);  document.getElementById('btn-fwd').classList.add('active');  break;
-    case 's': send_command(CMD_BACKWARD); document.getElementById('btn-bwd').classList.add('active');  break;
-    case 'a': send_command(CMD_LEFT);     document.getElementById('btn-left').classList.add('active'); break;
-    case 'd': send_command(CMD_RIGHT);    document.getElementById('btn-right').classList.add('active');break;
-    case ' ': send_command(CMD_STOP);     document.getElementById('btn-stop').classList.add('active'); break;
+  const key = e.key.toLowerCase();
+  if (key in keysPressed) {
+    keysPressed[key] = true;
+    updateMovement(); 
   }
 });
 
 document.addEventListener('keyup', function(e) {
-  switch(e.key.toLowerCase()) {
-    case 'w': send_command(CMD_STOP); document.getElementById('btn-fwd').classList.remove('active');  break;
-    case 's': send_command(CMD_STOP); document.getElementById('btn-bwd').classList.remove('active');  break;
-    case 'a': send_command(CMD_STOP); document.getElementById('btn-left').classList.remove('active'); break;
-    case 'd': send_command(CMD_STOP); document.getElementById('btn-right').classList.remove('active');break;
-    case ' ': send_command(CMD_STOP); document.getElementById('btn-stop').classList.remove('active'); break;
+  const key = e.key.toLowerCase();
+  if (key in keysPressed) {
+    keysPressed[key] = false;
+    updateMovement(); 
   }
 });
 
+// 4. Centralized function to evaluate combos and send commands
+function updateMovement() {
+  // Reset UI visual states first
+  document.getElementById('btn-fwd').classList.remove('active');
+  document.getElementById('btn-bwd').classList.remove('active');
+  document.getElementById('btn-left').classList.remove('active');
+  document.getElementById('btn-right').classList.remove('active');
+  document.getElementById('btn-stop').classList.remove('active');
+
+  // Handle emergency stop spacebar first
+  if (keysPressed[' ']) {
+    send_command(CMD_STOP);
+    document.getElementById('btn-stop').classList.add('active');
+    return; 
+  }
+
+  // Check specific combinations (like Forward + Right)
+  if (keysPressed.w && keysPressed.d) {
+    send_command(CMD_FORWARD_RIGHT); 
+    document.getElementById('btn-fwd').classList.add('active');
+    document.getElementById('btn-right').classList.add('active');
+  } 
+  else if (keysPressed.w && keysPressed.a) {
+    send_command(CMD_FORWARD_LEFT);
+    document.getElementById('btn-fwd').classList.add('active');
+    document.getElementById('btn-left').classList.add('active');
+  }
+  else if (keysPressed.s && keysPressed.d) {
+    send_command(CMD_BACKWARD_RIGHT);
+    document.getElementById('btn-bwd').classList.add('active');
+    document.getElementById('btn-right').classList.add('active');
+  }
+  else if (keysPressed.s && keysPressed.a) {
+    send_command(CMD_BACKWARD_LEFT);
+    document.getElementById('btn-bwd').classList.add('active');
+    document.getElementById('btn-left').classList.add('active');
+  }
+  // Fall back to single directional keys if no combo is pressed
+  else if (keysPressed.w) {
+    send_command(CMD_FORWARD);
+    document.getElementById('btn-fwd').classList.add('active');
+  } 
+  else if (keysPressed.s) {
+    send_command(CMD_BACKWARD);
+    document.getElementById('btn-bwd').classList.add('active');
+  } 
+  else if (keysPressed.a) {
+    send_command(CMD_LEFT);
+    document.getElementById('btn-left').classList.add('active');
+  } 
+  else if (keysPressed.d) {
+    send_command(CMD_RIGHT);
+    document.getElementById('btn-right').classList.add('active');
+  } 
+  // If absolutely nothing is pressed, stop
+  else {
+    send_command(CMD_STOP);
+  }
+}
+
+// 5. Initialize buttons
 bindBtn(document.getElementById('btn-fwd'),  CMD_FORWARD);
 bindBtn(document.getElementById('btn-bwd'),  CMD_BACKWARD);
 bindBtn(document.getElementById('btn-left'), CMD_LEFT);

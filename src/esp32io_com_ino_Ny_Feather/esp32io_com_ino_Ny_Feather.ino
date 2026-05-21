@@ -6,9 +6,13 @@
 
 #define CMD_STOP 0
 #define CMD_FORWARD 1
-#define CMD_BACKWARD 2
+#define CMD_BACKWARD 6
 #define CMD_LEFT 4
-#define CMD_RIGHT 8
+#define CMD_RIGHT 5
+#define CMD_FORWARD_RIGHT 2
+#define CMD_FORWARD_LEFT 3
+#define CMD_BACKWARD_RIGHT 7
+#define CMD_BACKWARD_LEFT 8
 
 #define ENA_PIN 6  // The ESP32 pin GPIO32 connected to the ENA pin L298N
 #define IN1_PIN 9  // The ESP32 pin GPIO15 connected to the IN1 pin L298N
@@ -32,7 +36,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
       }
       break;
     case WStype_TEXT:
-      //Serial.printf("[%u] Received text: %s\n", num, payload);
+      Serial.printf("[%u] Received text: %s\n", num, payload);
       String angle = String((char*)payload);
       int command = angle.toInt();
       Serial.print("command: ");
@@ -58,6 +62,22 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
         case CMD_RIGHT:
           Serial.println("Turn Right");
           CAR_turnRight();
+          break;
+        case CMD_FORWARD_RIGHT:
+          Serial.println("Move Formward-Right");
+          CAR_moveForwardRight();
+          break;
+        case CMD_FORWARD_LEFT:
+          Serial.println("Move Formward-Left");
+          CAR_moveForwardLeft();
+          break;
+        case CMD_BACKWARD_RIGHT:
+          Serial.println("Move Backward-Right");
+          CAR_moveBackwardRight();
+          break;
+        case CMD_BACKWARD_LEFT:
+          Serial.println("Move Backward-Left");
+          CAR_moveBackwardLeft();
           break;
         default:
           Serial.println("Unknown command");
@@ -139,6 +159,38 @@ void CAR_turnRight() {
   digitalWrite(IN2_PIN, HIGH);
   digitalWrite(IN3_PIN, HIGH);
   digitalWrite(IN4_PIN, LOW);
+}
+
+void CAR_moveForwardRight() {
+
+  digitalWrite(IN1_PIN, HIGH);
+  digitalWrite(IN2_PIN, LOW);
+  digitalWrite(IN3_PIN, LOW);
+  digitalWrite(IN4_PIN, LOW);
+}
+
+void CAR_moveForwardLeft() {
+
+  digitalWrite(IN1_PIN, LOW);
+  digitalWrite(IN2_PIN, LOW);
+  digitalWrite(IN3_PIN, HIGH);
+  digitalWrite(IN4_PIN, LOW);
+}
+
+void CAR_moveBackwardRight() {
+
+  digitalWrite(IN1_PIN, LOW);
+  digitalWrite(IN2_PIN, HIGH);
+  digitalWrite(IN3_PIN, LOW);
+  digitalWrite(IN4_PIN, LOW);
+}
+
+void CAR_moveBackwardLeft() {
+
+  digitalWrite(IN1_PIN, LOW);
+  digitalWrite(IN2_PIN, LOW);
+  digitalWrite(IN3_PIN, LOW);
+  digitalWrite(IN4_PIN, HIGH);
 }
 
 void CAR_stop() {
